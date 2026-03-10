@@ -1,4 +1,9 @@
 import os
+try:
+    import truststore
+    truststore.inject_into_ssl()
+except ImportError:
+    pass
 from pathlib import Path
 from datetime import datetime
 from rich.console import Console
