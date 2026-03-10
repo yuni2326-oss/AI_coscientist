@@ -100,7 +100,7 @@ class LiteratureAgent:
                         for row in con.execute(
                             "SELECT id.fieldID, idv.value "
                             "FROM itemData id JOIN itemDataValues idv ON idv.valueID = id.valueID "
-                            "WHERE id.itemID = ? AND id.fieldID IN (1, 6, 8, 27, 41)",
+                            "WHERE id.itemID = ? AND id.fieldID IN (1, 6, 8, 10, 27, 41)",
                             (item_id,)
                         ).fetchall()
                     }

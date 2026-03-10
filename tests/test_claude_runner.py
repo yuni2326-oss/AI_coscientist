@@ -29,6 +29,6 @@ def test_generate_via_sdk():
     )
     runner = ClaudeRunner()
     with patch("core.claude_runner._anthropic_available", True), \
-         patch("core.claude_runner.anthropic.Anthropic", return_value=mock_client):
+         patch("anthropic.Anthropic", return_value=mock_client):
         result = runner.generate("테스트")
     assert result == "SDK 응답"
