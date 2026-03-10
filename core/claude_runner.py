@@ -1,9 +1,10 @@
+import os
 import subprocess
 from config import settings
 
 try:
     import anthropic
-    _anthropic_available = True
+    _anthropic_available = bool(os.environ.get("ANTHROPIC_API_KEY"))
 except ImportError:
     _anthropic_available = False
 
@@ -25,7 +26,7 @@ class ClaudeRunner:
 
     def _generate_via_cli(self, prompt: str) -> str:
         result = subprocess.run(
-            ["claude", "-p", prompt],
+            ["claude", "-p", prompt, "--output-format", "text"],
             capture_output=True,
             text=True,
             timeout=settings.claude_timeout,
