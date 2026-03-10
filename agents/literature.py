@@ -22,7 +22,10 @@ class LiteratureAgent:
 
     def find_references(self, idea: Idea, research_input: ResearchInput, limit: int = 10, years_back: int = 7) -> list[str]:
         query_ko = f"{research_input.domain} {idea.title} {research_input.objective}"
-        query_en = translate_to_english(query_ko)
+        try:
+            query_en = translate_to_english(query_ko)
+        except Exception:
+            query_en = query_ko  # 번역 실패 시 원본 쿼리 사용
 
         papers = self._search_multi_source(query_en, limit, years_back)
         zotero_papers = self._search_zotero(query_en, limit)
