@@ -35,3 +35,14 @@ def test_save_proposal_returns_both_paths(tmp_path):
     assert md_path.suffix == ".md"
     assert docx_path.suffix == ".docx"
     assert md_path.stem == docx_path.stem  # 같은 파일명 기반
+
+
+def test_main_saves_multiple_proposals(tmp_path):
+    proposals = [_make_proposal(), _make_proposal()]
+    paths = []
+    for p in proposals:
+        md_path, docx_path = save_proposal(p, output_dir=str(tmp_path))
+        paths.append(md_path)
+    assert len(paths) == 2
+    for p in paths:
+        assert p.exists()

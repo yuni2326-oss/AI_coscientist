@@ -172,11 +172,13 @@ def save_proposal(proposal: ResearchProposal, output_dir: str = None) -> tuple[P
 def main():
     research_input = collect_input()
     supervisor = SupervisorAgent()
-    proposal = supervisor.run(research_input)
-    md_path, docx_path = save_proposal(proposal)
-    console.print(f"\n[bold green]제안서 저장 완료![/bold green]")
-    console.print(f"  Markdown : {md_path}")
-    console.print(f"  Word     : {docx_path}")
+    proposals = supervisor.run(research_input)
+    console.print(f"\n[bold green]제안서 {len(proposals)}개 저장 완료![/bold green]")
+    for proposal in proposals:
+        md_path, docx_path = save_proposal(proposal)
+        console.print(f"\n  [cyan]{proposal.selected_idea.title}[/cyan]")
+        console.print(f"    Markdown : {md_path}")
+        console.print(f"    Word     : {docx_path}")
 
 
 if __name__ == "__main__":
