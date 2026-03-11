@@ -20,7 +20,7 @@ class LiteratureAgent:
     def __init__(self):
         self.claude = ClaudeRunner()
 
-    def find_references(self, idea: Idea, research_input: ResearchInput, limit: int = 10, years_back: int = 7) -> list[str]:
+    def find_references(self, idea: Idea, research_input: ResearchInput, limit: int = 20, years_back: int = 7) -> list[str]:
         query_ko = f"{research_input.domain} {idea.title} {research_input.objective}"
         try:
             query_en = translate_to_english(query_ko)
@@ -148,7 +148,7 @@ class LiteratureAgent:
             authors = ", ".join(p.authors[:3]) if p.authors else "Unknown"
             return f"- {p.title} / {authors} ({p.year}) {src_tag}{doi_str}"
 
-        paper_list = "\n".join(fmt(p) for p in papers[:15]) if papers else "검색 결과 없음"
+        paper_list = "\n".join(fmt(p) for p in papers[:20]) if papers else "검색 결과 없음"
 
         prompt = f"""다음 공학 연구 아이디어에 관련된 핵심 참고문헌을 정리해주세요.
 
@@ -159,7 +159,7 @@ class LiteratureAgent:
 검색된 논문 목록 (출처: [zotero]=내 라이브러리, [scholar/openalex/semantic_scholar]=온라인):
 {paper_list}
 
-위 검색 결과를 바탕으로 가장 관련성 높은 참고문헌 10개를 번호 목록으로 정리하세요.
+위 검색 결과를 바탕으로 가장 관련성 높은 참고문헌 20개를 번호 목록으로 정리하세요.
 [zotero] 출처 논문을 우선적으로 포함하세요.
 형식: N. [저자] ([연도]) - [제목]
 검색 결과가 부족하면 관련 분야의 대표 논문을 추가해도 됩니다.
