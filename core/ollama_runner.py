@@ -13,6 +13,7 @@ class OllamaRunner:
 
         response = ollama.chat(
             model=self.model,
-            messages=messages
+            messages=messages,
+            options={"num_ctx": settings.ollama_num_ctx, "temperature": settings.ollama_temperature}
         )
         return response["message"]["content"]

@@ -1,5 +1,6 @@
 from core.ollama_runner import OllamaRunner
 from models.schemas import ResearchInput, Idea
+from config import settings
 import re
 
 SYSTEM_PROMPT = """당신은 공학 연구 아이디어 생성 전문가입니다.
@@ -12,7 +13,7 @@ class GeneratorAgent:
 
     def generate(self, research_input: ResearchInput) -> list[Idea]:
         prompt = f"""
-다음 연구 목표에 대해 {3}가지 서로 다른 공학적 접근 아이디어를 생성하세요.
+다음 연구 목표에 대해 {settings.max_ideas}가지 서로 다른 공학적 접근 아이디어를 생성하세요.
 
 도메인: {research_input.domain}
 목표: {research_input.objective}
