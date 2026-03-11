@@ -25,7 +25,8 @@ def test_supervisor_returns_proposal():
 
     ri = ResearchInput(domain="센서", objective="목표", constraints=[])
     result = agent.run(ri)
-    assert result is not None
+    assert isinstance(result, list)
+    assert len(result) >= 1
 
 
 def test_supervisor_returns_list_of_proposals():
