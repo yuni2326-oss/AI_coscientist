@@ -66,12 +66,14 @@ def _add_markdown_body(doc: Document, text: str):
             doc.add_paragraph(stripped)
 
 
-def save_proposal(proposal: ResearchProposal, output_dir: str = None) -> tuple[Path, Path]:
+def save_proposal(proposal: ResearchProposal, output_dir: str = None, index: int = 0) -> tuple[Path, Path]:
     """마크다운(.md)과 Word(.docx) 두 형식으로 저장. (md_path, docx_path) 반환"""
     output_dir = Path(output_dir or settings.output_dir)
     output_dir.mkdir(exist_ok=True)
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     stem = f"{timestamp}_{proposal.input.domain.replace(' ', '_')}"
+    if index > 0:
+        stem = f"{stem}_{index}"
 
     # ── 1. 마크다운 저장 ──────────────────────────────
     md_path = output_dir / f"{stem}.md"
@@ -173,12 +175,12 @@ def main():
     research_input = collect_input()
     supervisor = SupervisorAgent()
     proposals = supervisor.run(research_input)
-    console.print(f"\n[bold green]제안서 {len(proposals)}개 저장 완료![/bold green]")
-    for proposal in proposals:
-        md_path, docx_path = save_proposal(proposal)
+    for i, proposal in enumerate(proposals):
+        md_path, docx_path = save_proposal(proposal, index=i)
         console.print(f"\n  [cyan]{proposal.selected_idea.title}[/cyan]")
         console.print(f"    Markdown : {md_path}")
         console.print(f"    Word     : {docx_path}")
+    console.print(f"\n[bold green]제안서 {len(proposals)}개 저장 완료![/bold green]")
 
 
 if __name__ == "__main__":

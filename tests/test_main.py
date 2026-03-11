@@ -38,11 +38,14 @@ def test_save_proposal_returns_both_paths(tmp_path):
 
 
 def test_main_saves_multiple_proposals(tmp_path):
+    """main()이 복수 제안서를 루프로 저장하는지 검증"""
     proposals = [_make_proposal(), _make_proposal()]
     paths = []
-    for p in proposals:
-        md_path, docx_path = save_proposal(p, output_dir=str(tmp_path))
+    for i, p in enumerate(proposals):
+        md_path, docx_path = save_proposal(p, output_dir=str(tmp_path), index=i)
         paths.append(md_path)
     assert len(paths) == 2
     for p in paths:
         assert p.exists()
+    # 파일명이 다른지 확인 (index로 구분)
+    assert paths[0] != paths[1]
