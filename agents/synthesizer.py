@@ -21,6 +21,49 @@ class SynthesizerAgent:
             references=references
         )
 
+    def revise(self, proposal: ResearchProposal, feedback: str) -> ResearchProposal:
+        raw = self.claude.generate(self._build_revise_prompt(proposal, feedback))
+        design_spec, experiment_plan, simulation = self._parse_sections(raw)
+
+        return ResearchProposal(
+            title=proposal.title,
+            input=proposal.input,
+            selected_idea=proposal.selected_idea,
+            design_spec=design_spec or proposal.design_spec,
+            experiment_plan=experiment_plan or proposal.experiment_plan,
+            simulation_suggestion=simulation or proposal.simulation_suggestion,
+            references=proposal.references,
+        )
+
+    def _build_revise_prompt(self, proposal: ResearchProposal, feedback: str) -> str:
+        return f"""다음은 기존 연구 제안서입니다. 사용자의 수정 요청을 반영하여 필요한 섹션만 업데이트해주세요.
+
+[기존 제안서]
+
+## 설계 사양
+{proposal.design_spec}
+
+## 실험 계획
+{proposal.experiment_plan}
+
+## 시뮬레이션 방법
+{proposal.simulation_suggestion}
+
+[수정 요청]
+{feedback}
+
+수정이 필요 없는 섹션도 반드시 그대로 포함하여 아래 형식으로 전체 출력하세요:
+
+## 설계 사양
+(내용)
+
+## 실험 계획
+(내용)
+
+## 시뮬레이션 방법
+(내용)
+"""
+
     def _build_prompt(self, ri: ResearchInput, idea: Idea) -> str:
         return f"""다음 공학 연구 아이디어에 대해 연구 제안서의 3개 섹션을 한 번에 작성해주세요.
 
