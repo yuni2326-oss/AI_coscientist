@@ -110,3 +110,13 @@ def test_revise_prompt_contains_existing_sections():
     assert proposal.design_spec in call_args
     assert proposal.experiment_plan in call_args
     assert proposal.simulation_suggestion in call_args
+
+
+def test_revise_fallback_on_parse_failure():
+    agent = _make_agent()
+    agent.claude.generate.return_value = "파싱 불가능한 응답"
+    proposal = _make_proposal()
+    revised = agent.revise(proposal, "수정 요청")
+    assert revised.design_spec == proposal.design_spec
+    assert revised.experiment_plan == proposal.experiment_plan
+    assert revised.simulation_suggestion == proposal.simulation_suggestion

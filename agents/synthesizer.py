@@ -23,20 +23,27 @@ class SynthesizerAgent:
 
     def revise(self, proposal: ResearchProposal, feedback: str) -> ResearchProposal:
         raw = self.claude.generate(self._build_revise_prompt(proposal, feedback))
-        design_spec, experiment_plan, simulation = self._parse_sections(raw)
+        sections = {"설계 사양": "", "실험 계획": "", "시뮬레이션 방법": ""}
+        pattern = re.compile(r"^##\s+(설계 사양|실험 계획|시뮬레이션 방법)", re.MULTILINE)
+        matches = list(pattern.finditer(raw))
+        for i, match in enumerate(matches):
+            key = match.group(1)
+            start = match.end()
+            end = matches[i + 1].start() if i + 1 < len(matches) else len(raw)
+            sections[key] = raw[start:end].strip()
 
         return ResearchProposal(
             title=proposal.title,
             input=proposal.input,
             selected_idea=proposal.selected_idea,
-            design_spec=design_spec or proposal.design_spec,
-            experiment_plan=experiment_plan or proposal.experiment_plan,
-            simulation_suggestion=simulation or proposal.simulation_suggestion,
+            design_spec=sections["설계 사양"] or proposal.design_spec,
+            experiment_plan=sections["실험 계획"] or proposal.experiment_plan,
+            simulation_suggestion=sections["시뮬레이션 방법"] or proposal.simulation_suggestion,
             references=proposal.references,
         )
 
     def _build_revise_prompt(self, proposal: ResearchProposal, feedback: str) -> str:
-        return f"""다음은 기존 연구 제안서입니다. 사용자의 수정 요청을 반영하여 필요한 섹션만 업데이트해주세요.
+        return f"""다음은 기존 연구 제안서입니다. 사용자의 수정 요청을 반영하여 모든 섹션을 아래 형식으로 전체 출력해주세요.
 
 [기존 제안서]
 
