@@ -11,6 +11,10 @@ class SynthesizerAgent:
         raw = self.claude.generate(self._build_prompt(research_input, idea))
         design_spec, experiment_plan, simulation = self._parse_sections(raw)
 
+        # 파싱 실패 시 raw 전체를 설계 사양에 담음 (기존 동작 유지)
+        if not design_spec and not experiment_plan and not simulation:
+            design_spec = raw
+
         return ResearchProposal(
             title=f"{research_input.domain} - {idea.title}",
             input=research_input,
@@ -23,22 +27,15 @@ class SynthesizerAgent:
 
     def revise(self, proposal: ResearchProposal, feedback: str) -> ResearchProposal:
         raw = self.claude.generate(self._build_revise_prompt(proposal, feedback))
-        sections = {"설계 사양": "", "실험 계획": "", "시뮬레이션 방법": ""}
-        pattern = re.compile(r"^##\s+(설계 사양|실험 계획|시뮬레이션 방법)", re.MULTILINE)
-        matches = list(pattern.finditer(raw))
-        for i, match in enumerate(matches):
-            key = match.group(1)
-            start = match.end()
-            end = matches[i + 1].start() if i + 1 < len(matches) else len(raw)
-            sections[key] = raw[start:end].strip()
+        design_spec, experiment_plan, simulation = self._parse_sections(raw)
 
         return ResearchProposal(
             title=proposal.title,
             input=proposal.input,
             selected_idea=proposal.selected_idea,
-            design_spec=sections["설계 사양"] or proposal.design_spec,
-            experiment_plan=sections["실험 계획"] or proposal.experiment_plan,
-            simulation_suggestion=sections["시뮬레이션 방법"] or proposal.simulation_suggestion,
+            design_spec=design_spec or proposal.design_spec,
+            experiment_plan=experiment_plan or proposal.experiment_plan,
+            simulation_suggestion=simulation or proposal.simulation_suggestion,
             references=proposal.references,
         )
 
@@ -101,7 +98,7 @@ class SynthesizerAgent:
 """
 
     def _parse_sections(self, raw: str) -> tuple[str, str, str]:
-        """## 헤더 기준으로 3개 섹션 파싱"""
+        """## 헤더 기준으로 3개 섹션 파싱. 매칭 없으면 빈 문자열 반환."""
         sections = {"설계 사양": "", "실험 계획": "", "시뮬레이션 방법": ""}
         pattern = re.compile(r"^##\s+(설계 사양|실험 계획|시뮬레이션 방법)", re.MULTILINE)
         matches = list(pattern.finditer(raw))
@@ -111,9 +108,5 @@ class SynthesizerAgent:
             start = match.end()
             end = matches[i + 1].start() if i + 1 < len(matches) else len(raw)
             sections[key] = raw[start:end].strip()
-
-        # 파싱 실패 시 전체 텍스트를 설계 사양에 담음
-        if not any(sections.values()):
-            sections["설계 사양"] = raw
 
         return sections["설계 사양"], sections["실험 계획"], sections["시뮬레이션 방법"]
