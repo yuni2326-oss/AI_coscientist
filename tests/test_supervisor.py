@@ -21,7 +21,10 @@ def test_supervisor_returns_proposal():
     agent.checkpoint.confirm.return_value = True
     agent.literature.find_references.return_value = ["ref1", "ref2"]
     mock_proposal = MagicMock()
+    mock_proposal.title = "테스트 제안서"
     mock_proposal.design_spec = "## 설계 사양\n내용..."
+    mock_proposal.experiment_plan = "## 실험 계획\n내용..."
+    mock_proposal.simulation_suggestion = "## 시뮬레이션 방법\n내용..."
     agent.synthesizer.synthesize.return_value = mock_proposal
 
     ri = ResearchInput(domain="센서", objective="목표", constraints=[])
@@ -45,7 +48,10 @@ def test_supervisor_returns_list_of_proposals():
     agent.checkpoint.confirm.return_value = True
     agent.literature.find_references.return_value = ["ref1", "ref2"]
     mock_proposal = MagicMock()
+    mock_proposal.title = "테스트 제안서"
     mock_proposal.design_spec = "## 설계 사양\n내용..."
+    mock_proposal.experiment_plan = "## 실험 계획\n내용..."
+    mock_proposal.simulation_suggestion = "## 시뮬레이션 방법\n내용..."
     agent.synthesizer.synthesize.return_value = mock_proposal
 
     ri = ResearchInput(domain="센서", objective="목표", constraints=[])
@@ -79,3 +85,47 @@ def test_supervisor_select_ideas_fallback_to_best():
     ideas = [make_idea("A"), make_idea("B")]
     selected = agent._select_ideas(ideas, "없는아이디어")
     assert len(selected) == 1
+
+
+def test_supervisor_cp3_revision_calls_revise():
+    """CP#3에서 피드백 입력 시 synthesizer.revise()가 호출되고 반환값이 결과에 반영되는지 검증"""
+    agent = SupervisorAgent()
+    ri = ResearchInput(domain="광학", objective="고감도", constraints=["저전력"])
+
+    mock_idea = MagicMock()
+    mock_idea.title = "테스트 아이디어"
+    mock_idea.scores = {"기술성숙도": 5, "실현가능성": 5, "독창성": 5}
+
+    mock_proposal = MagicMock()
+    mock_proposal.title = "테스트 제안서"
+    mock_proposal.design_spec = "## 설계 사양\n내용..."
+    mock_proposal.experiment_plan = "## 실험 계획\n내용..."
+    mock_proposal.simulation_suggestion = "## 시뮬레이션 방법\n내용..."
+    mock_proposal.selected_idea = mock_idea
+
+    revised_proposal = MagicMock()
+    revised_proposal.title = "수정된 제안서"
+    revised_proposal.design_spec = "## 설계 사양\n수정된 내용..."
+    revised_proposal.experiment_plan = "## 실험 계획\n수정된 내용..."
+    revised_proposal.simulation_suggestion = "## 시뮬레이션 방법\n수정된 내용..."
+    revised_proposal.selected_idea = mock_idea
+
+    agent.generator = MagicMock()
+    agent.critic = MagicMock()
+    agent.literature = MagicMock()
+    agent.synthesizer = MagicMock()
+    agent.checkpoint = MagicMock()
+
+    agent.generator.generate = MagicMock(return_value=[mock_idea])
+    agent.critic.score_all = MagicMock(return_value=[mock_idea])
+    agent.literature.find_references = MagicMock(return_value=["ref1"])
+    agent.synthesizer.synthesize = MagicMock(return_value=mock_proposal)
+    agent.synthesizer.revise = MagicMock(return_value=revised_proposal)
+    # CP#1: 아이디어 선택, CP#3: 피드백 → revise 호출, 다음 입력 → 빈 입력으로 종료
+    agent.checkpoint.ask = MagicMock(side_effect=["1", "수정 요청", ""])
+    agent.checkpoint.confirm = MagicMock(return_value=True)
+
+    result = agent.run(ri)
+
+    agent.synthesizer.revise.assert_called_once_with(mock_proposal, "수정 요청")
+    assert result[0] is revised_proposal
