@@ -1,5 +1,6 @@
 import re
 from rich.console import Console
+from rich.panel import Panel
 from rich.table import Table
 from agents.generator import GeneratorAgent
 from agents.critic import CriticAgent
@@ -54,13 +55,22 @@ class SupervisorAgent:
             proposal = self.synthesizer.synthesize(research_input, selected, references)
             proposals.append(proposal)
 
-        # Checkpoint #3 — 전체 완료 후 한 번
+        # Checkpoint #3 — 아이디어별 수정 루프
         self.checkpoint.checkpoint_num = 3
-        summary = "\n\n".join(
-            f"[{p.selected_idea.title}]\n{p.design_spec[:200]}..." for p in proposals
-        )
-        self.checkpoint.display("최종 검토", summary)
-        self.checkpoint.confirm("제안서 생성을 완료하시겠습니까?")
+        total = len(proposals)
+        for idx, proposal in enumerate(proposals, 1):
+            round_num = 0
+            while True:
+                self._display_proposal(proposal, idx, total, round_num)
+                feedback = self.checkpoint.ask(
+                    "수정할 내용을 입력하세요 (없으면 Enter로 완료)"
+                )
+                if not feedback.strip():
+                    break
+                console.print("[bold green]재생성 중...[/bold green]")
+                proposal = self.synthesizer.revise(proposal, feedback)
+                round_num += 1
+            proposals[idx - 1] = proposal
 
         return proposals
 
@@ -97,3 +107,14 @@ class SupervisorAgent:
             return matched
         # fallback: 최고점 1개
         return [max(ideas, key=lambda x: sum(x.scores.values()), default=ideas[0])]
+
+    def _display_proposal(self, proposal: ResearchProposal, idx: int, total: int, round_num: int):
+        round_label = "최초" if round_num == 0 else f"수정 {round_num}회차"
+        title = f"Checkpoint #3: 최종 검토 [{idx}/{total}] ({round_label})"
+        content = (
+            f"[bold]{proposal.title}[/bold]\n\n"
+            f"[cyan]── 설계 사양 ──[/cyan]\n{proposal.design_spec}\n\n"
+            f"[cyan]── 실험 계획 ──[/cyan]\n{proposal.experiment_plan}\n\n"
+            f"[cyan]── 시뮬레이션 방법 ──[/cyan]\n{proposal.simulation_suggestion}"
+        )
+        console.print(Panel(content, title=f"[bold cyan]{title}[/bold cyan]"))

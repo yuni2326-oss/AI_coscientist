@@ -16,7 +16,8 @@ def test_supervisor_returns_proposal():
 
     agent.generator.generate.return_value = [make_idea("A"), make_idea("B")]
     agent.critic.score_all.return_value = [make_idea("A"), make_idea("B")]
-    agent.checkpoint.ask.return_value = "A를 선택"
+    # ask() is called: (1) idea selection, (2) CP#3 revision prompt → empty to exit loop
+    agent.checkpoint.ask.side_effect = ["A를 선택", ""]
     agent.checkpoint.confirm.return_value = True
     agent.literature.find_references.return_value = ["ref1", "ref2"]
     mock_proposal = MagicMock()
@@ -39,7 +40,8 @@ def test_supervisor_returns_list_of_proposals():
 
     agent.generator.generate.return_value = [make_idea("A"), make_idea("B"), make_idea("C")]
     agent.critic.score_all.return_value = [make_idea("A"), make_idea("B"), make_idea("C")]
-    agent.checkpoint.ask.return_value = "1,2"  # 두 아이디어 선택
+    # ask() is called: (1) idea selection, (2) CP#3 revision for proposal 1, (3) CP#3 for proposal 2
+    agent.checkpoint.ask.side_effect = ["1,2", "", ""]
     agent.checkpoint.confirm.return_value = True
     agent.literature.find_references.return_value = ["ref1", "ref2"]
     mock_proposal = MagicMock()
