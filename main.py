@@ -16,6 +16,9 @@ from models.schemas import ResearchInput, ResearchProposal
 from agents.supervisor import SupervisorAgent
 from config import settings
 
+if settings.semantic_scholar_api_key:
+    os.environ.setdefault("SEMANTIC_SCHOLAR_API_KEY", settings.semantic_scholar_api_key)
+
 console = Console()
 
 

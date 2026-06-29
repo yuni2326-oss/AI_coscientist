@@ -12,6 +12,7 @@
 - **문헌 검색** — Google Scholar · OpenAlex · Semantic Scholar · Zotero 로컬 라이브러리 병합 검색
 - **제안서 작성** — Claude가 설계 사양 · 실험 계획 · 시뮬레이션 방법을 마크다운으로 작성
 - **Human Checkpoint** — 아이디어 선택 / 참고문헌 확인 / 최종 검토 3단계 사용자 개입
+- **수정 루프** — 최종 검토 단계에서 피드백을 입력하면 Claude가 관련 섹션을 자동 판단해 재생성, 만족할 때까지 무제한 반복
 
 ---
 
@@ -78,9 +79,16 @@ ollama pull qwen3.5:9b
 
 프로젝트 루트에 `.env` 파일을 생성합니다.
 
+`.env.example`을 복사해서 값을 채웁니다.
+
+```bash
+cp .env.example .env
+```
+
 ```env
-# 사용할 Ollama 모델명
-OLLAMA_MODEL=qwen3.5:9b
+# 사용할 Ollama 모델명 (권장: gemma4:26b 또는 qwen3.5:9b)
+OLLAMA_MODEL=gemma4:26b
+OLLAMA_NUM_CTX=16384
 
 # Claude 호출 방식 선택 (둘 중 하나)
 # 방법 A: Anthropic API 키 사용 (빠름, 유료)
@@ -88,7 +96,11 @@ ANTHROPIC_API_KEY=sk-ant-...
 
 # 방법 B: Claude CLI 사용 (무료, claude auth login 필요)
 # ANTHROPIC_API_KEY를 설정하지 않으면 자동으로 CLI 사용
-CLAUDE_TIMEOUT=600
+CLAUDE_TIMEOUT=900
+
+# Semantic Scholar API 키 (선택 — 없으면 낮은 rate limit 적용)
+# https://www.semanticscholar.org/product/api 에서 발급
+SEMANTIC_SCHOLAR_API_KEY=
 ```
 
 ### 5. Claude CLI 인증 (방법 B 사용 시)
@@ -124,7 +136,7 @@ python main.py
 python -m pytest tests/ -v
 ```
 
-16개 단위 테스트 포함. 외부 API 호출 없이 mock으로 실행됩니다.
+33개 단위 테스트 포함. 외부 API 호출 없이 mock으로 실행됩니다.
 
 ---
 
